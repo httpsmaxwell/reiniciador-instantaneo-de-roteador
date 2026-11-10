@@ -7,17 +7,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Carrega as variáveis do arquivo .env se ele existir localmente
+# Carrega as variáveis de ambiente do ficheiro .env
 load_dotenv()
 
-# Recupera credenciais das variáveis de ambiente
-ROUTER_USER = os.getenv("ROUTER_USER", "CLARO_34A9CE")  # valor padrão de fallback se não definido
+# Recupera as credenciais do ambiente
+ROUTER_USER = os.getenv("ROUTER_USER", "CLARO_34A9CE")
 ROUTER_PASS = os.getenv("ROUTER_PASS")
 
 if not ROUTER_PASS:
-    raise ValueError("A senha do roteador não foi configurada nas variáveis de ambiente.")
+    raise ValueError("A senha do roteador não foi configurada no ficheiro .env.")
 
-# Configurações do Chrome
+# Configurações do Chrome para execução oculta (headless)
 chrome_options = Options()
 chrome_options.add_argument("--headless=new")
 chrome_options.add_argument("--disable-gpu")
@@ -31,8 +31,10 @@ driver = webdriver.Chrome(options=chrome_options)
 wait = WebDriverWait(driver, 15)
 
 try:
+    # 1. Acesso à interface do roteador
     driver.get("http://192.168.0.1")
 
+    # Contorna o aviso de certificado SSL caso seja exibido
     try:
         details_btn = WebDriverWait(driver, 2).until(
             EC.element_to_be_clickable((By.ID, "details-button"))
@@ -46,7 +48,7 @@ try:
     except Exception:
         pass
 
-    # 2. Login usando as variáveis
+    # 2. Processo de Login
     user_input = wait.until(EC.element_to_be_clickable((By.ID, "Frm_Username")))
     user_input.clear()
     user_input.send_keys(ROUTER_USER)
@@ -58,7 +60,7 @@ try:
     login_btn = driver.find_element(By.ID, "LoginId")
     login_btn.click()
 
-    # 3. Navegação
+    # 3. Navegação interna até ao reboot
     advanced_btn = wait.until(EC.element_to_be_clickable((By.ID, "Qstate")))
     advanced_btn.click()
 
@@ -71,13 +73,14 @@ try:
     reboot_menu_item = wait.until(EC.element_to_be_clickable((By.ID, "reboot")))
     reboot_menu_item.click()
 
-    # 4. Confirmação do Reboot
+    # 4. Confirmação do Reinício
     reboot_btn = wait.until(EC.element_to_be_clickable((By.ID, "Btn_restart")))
     reboot_btn.click()
 
     confirm_ok_btn = wait.until(EC.element_to_be_clickable((By.ID, "confirmOK")))
     confirm_ok_btn.click()
 
+    # Pausa técnica para assegurar o envio do comando
     time.sleep(2)
 
 finally:
